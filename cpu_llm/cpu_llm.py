@@ -1,6 +1,7 @@
 import json
+import os
 
-from cpu_llm.utils import get_llm_model, get_model_prompt, get_model_chain, get_model_response
+from cpu_llm.utils import get_llm_model, get_model_prompt, get_model_chain, get_model_response, process_data, get_rag_model_response
 
 
 def init_config(model_name, model_file, context_length, model_chain_type, model_inst_template,
@@ -54,3 +55,18 @@ def respond(model_name, model_file, context_length, model_chain_type, model_inst
     )
     chat_history.append((model_input_msg, response))
     return "", chat_history
+
+
+def respond_rag(files, context_length, model_name, model_file, db_name, rag_model_input_msg, rag_chat_history):
+    print("Inputs : ", files, context_length, model_name, model_file, db_name, rag_model_input_msg, rag_chat_history)
+    if os.path.isdir(db_name):
+        is_processed = True
+    else:
+        is_processed = process_data(db_name, files)
+    if is_processed:
+        response = get_rag_model_response(db_name, context_length, model_name, model_file, rag_model_input_msg)
+
+        f_response = response['result']
+
+        rag_chat_history.append((rag_model_input_msg, f_response))
+        return "", rag_chat_history
